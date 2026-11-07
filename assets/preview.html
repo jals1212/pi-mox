@@ -1,0 +1,71 @@
+<!doctype html>
+<!-- Source of assets/preview.png, the Pi package gallery preview (package.json pi.image).
+     Regenerate on macOS: qlmanage -t -s 1280 -o <dir> assets/preview.html, then
+     sips -c 640 1280 <dir>/preview.html.png --out assets/preview.png
+     (Quick Look renders a 1000px square page: the image is the band in its middle, hence the zoom and margin below).
+     Look: a Roman inscription. Marble gray, bronze, capitals with interpuncts (·MOX·), Roman numerals. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { width: 100%; height: 1000px; overflow: hidden;
+    background:
+      radial-gradient(ellipse at 18% 40%, rgba(205,127,50,.10) 0%, transparent 45%),
+      linear-gradient(115deg, #26241f 0%, #1b1a17 45%, #121110 100%); }
+  body { zoom: 0.78125; }
+  body { width: 1280px; height: 640px; margin-top: 320px; }
+  body {
+    color: #e9e6dd;
+    font-family: Optima, "Optima Nova", Candara, "Gill Sans", serif;
+    display: flex; align-items: center; gap: 56px; padding: 0 72px;
+  }
+  .left { width: 480px; }
+  .rule { height: 2px; width: 120px; background: linear-gradient(90deg, #cd7f32, #8a5a2b); }
+  h1 { font-size: 104px; font-weight: 600; letter-spacing: 14px; color: #cd7f32; margin: 22px 0 6px -6px;
+    text-shadow: 0 1px 0 #f0b47a55, 0 -1px 0 #00000088; }
+  h1 .dot { color: #b8b8b0; letter-spacing: 6px; }
+  .latin { font-size: 22px; letter-spacing: 6px; color: #b8b8b0; text-transform: uppercase; }
+  p { font-size: 25px; line-height: 1.4; color: #c9c6bc; margin-top: 22px; }
+  .tags { margin-top: 28px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .tags span { font: 600 17px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #e8c39a;
+    background: #2a2620; border: 1px solid #6b4a2a; border-radius: 4px; padding: 9px 14px; }
+  .term { flex: 1; background: #181715; border: 1px solid #4a4237; border-radius: 10px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.5); overflow: hidden; }
+  .bar { height: 38px; background: #22201c; display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+  .bar i { width: 12px; height: 12px; border-radius: 50%; display: block; background: #4a453d; }
+  .body { padding: 22px 26px 24px; font: 19px/1.65 ui-monospace, "SF Mono", Menlo, monospace; color: #d6d3ca; }
+  .body > div { white-space: pre; }
+  .prompt { color: #cd7f32; }
+  .dim { color: #8a867c; }
+  .bronze { color: #cd7f32; font-weight: 700; }
+  .marble { color: #b8b8b0; }
+  .id { display: inline-block; width: 3.2ch; color: #cd7f32; }
+  .gap { height: 12px; }
+  .cue { border-left: 3px solid #cd7f32; padding-left: 12px; margin-top: 4px; }
+  .status { margin-top: 16px; border-top: 1px solid #36312a; padding-top: 12px; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="rule"></div>
+    <h1><span class="dot">·</span>MOX<span class="dot">·</span></h1>
+    <div class="latin">latin · soon</div>
+    <p>Schedule a message for the agent in Pi. Say when, say what: at that time it reaches the agent and starts a turn.</p>
+    <div class="tags"><span>/mox 10:30</span><span>/mox +2h15m</span><span>list · cancel</span></div>
+  </div>
+  <div class="term">
+    <div class="bar"><i></i><i></i><i></i></div>
+    <div class="body">
+      <div><span class="prompt">❯</span> /mox 10:30 continue with T3</div>
+      <div class="dim">Scheduled I for 10:30 (in 2h06m)</div>
+      <div><span class="prompt">❯</span> /mox list</div>
+      <div><span class="id">I</span>10:30  <span class="dim">2h06m</span>  continue with T3</div>
+      <div><span class="id">II</span>14:00  <span class="dim">5h36m</span>  run the suite</div>
+      <div class="gap"></div>
+      <div class="cue"><span class="bronze">·MOX·</span> <span class="marble">10:30</span> — continue with T3</div>
+      <div class="status"><span class="dim">quota back at 10:30</span><span><span class="bronze">·MOX·</span> <span class="marble">10:30 · II h VI m</span></span></div>
+    </div>
+  </div>
+</body>
+</html>
