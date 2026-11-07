@@ -5,6 +5,8 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+## 0.1.1
+
 ### Added
 
 - A gallery preview image (`pi.image`) in the Roman inscription look, also at the top of the README;
