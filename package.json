@@ -1,0 +1,56 @@
+{
+  "name": "pi-mox",
+  "version": "0.1.0",
+  "description": "Schedule a message for the agent in Pi: /mox 10:30 <message> delivers it at that time and starts a turn.",
+  "license": "MIT",
+  "author": "jals1212",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jals1212/pi-mox.git"
+  },
+  "homepage": "https://github.com/jals1212/pi-mox#readme",
+  "bugs": "https://github.com/jals1212/pi-mox/issues",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "mox",
+    "schedule",
+    "reminder",
+    "agent"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./extensions/mox.ts"
+    ]
+  },
+  "files": [
+    "src",
+    "extensions",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test \"tests/*.test.ts\""
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    },
+    "@earendil-works/pi-tui": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
