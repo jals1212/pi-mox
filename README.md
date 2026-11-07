@@ -92,6 +92,14 @@ npm test
 - `src/wire.ts`: connects the core to Pi's extension API.
 - `extensions/mox.ts`: the package's Pi extension entry.
 
+## Releasing
+
+Branches: work goes to `develop` through pull requests; `main` receives `develop` when a release closes.
+
+1. On a `release/X.Y.Z` branch from `develop`: set `version` in `package.json`, rename `## Unreleased` in `CHANGELOG.md` to `## X.Y.Z`, and commit `release X.Y.Z: <summary>`. Merge it into `develop`, then `develop` into `main`.
+2. Tag `main` with `vX.Y.Z` and push the tag.
+3. The [release workflow](.github/workflows/release.yml) checks the tag against `package.json` and `CHANGELOG.md`, runs the tests, and stages the version on npm through trusted publishing, with provenance. Approve it with 2FA: `npm stage list`, then `npm stage approve <id>`, or on npmjs.com. It then creates the GitHub release with the version's CHANGELOG section as notes.
+
 ## License
 
 MIT
