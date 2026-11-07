@@ -75,7 +75,7 @@ Errors (bad time, missing message, unknown id) are shown with a usage line and c
   there is no retry.
 - **In memory.** Cues are kept only while Pi runs. Closing Pi (or ending the session) drops them.
 - **Wall clock.** The next cue is checked against the clock at least every 30 seconds, so a cue that came due
-  while the computer slept fires as soon as it wakes. Timers never keep Pi from exiting.
+  while the computer was suspended is delivered as soon as it resumes. Timers never keep Pi from exiting.
 - **Ids.** Roman numerals counting up from `I` in each session; an id is never reused, even after a cue is
   cancelled or fired.
 
