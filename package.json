@@ -22,7 +22,8 @@
   "pi": {
     "extensions": [
       "./extensions/mox.ts"
-    ]
+    ],
+    "image": "https://raw.githubusercontent.com/jals1212/pi-mox/main/assets/preview.png"
   },
   "files": [
     "src",

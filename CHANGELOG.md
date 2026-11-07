@@ -5,6 +5,11 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+### Added
+
+- A gallery preview image (`pi.image`) in the Roman inscription look, also at the top of the README;
+  its source is `assets/preview.html`.
+
 ## 0.1.0
 
 ### Added
