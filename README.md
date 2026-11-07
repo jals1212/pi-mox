@@ -1,4 +1,6 @@
-# pi-mox
+# ·MOX· pi-mox
+
+![pi-mox: schedule a message for the agent in Pi](assets/preview.png)
 
 Schedule a message for the agent in [Pi](https://github.com/earendil-works/pi). Say when, say what, and at
 that time the message reaches the agent and starts a turn. *Mox* is Latin for "soon".
