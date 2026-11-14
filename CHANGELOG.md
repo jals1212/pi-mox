@@ -5,6 +5,8 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+## 0.2.0
+
 ### Added
 
 - `/mox show <id>` shows one cue with its whole message.
