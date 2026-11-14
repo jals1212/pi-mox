@@ -87,8 +87,8 @@ test("a missing message is rejected and changes nothing", () => {
 	assert.equal(f.timers.size, 0);
 });
 
-test("the usage line names the three forms", () => {
-	assert.equal(USAGE, "Usage: /mox <time> <message>, /mox list, /mox cancel <id> (time: 10:30 or +2h15m)");
+test("the usage line names the four forms", () => {
+	assert.equal(USAGE, "Usage: /mox <time> <message>, /mox list, /mox show <id>, /mox cancel <id> (time: 10:30 or +2h15m)");
 });
 
 // S4, S8: list.
@@ -110,6 +110,56 @@ test("/mox list shows Roman id, HH:MM, remaining and message in the S8 format", 
 	f.notes.length = 0;
 	f.run("");
 	assert.deepEqual(f.notes, [["info", "I   10:30  2h06m  continúa con T3\nII  14:00  5h36m  corre la suite"]]);
+});
+
+test("/mox list shows a long or multi-line message as one line cut at 60 characters with …", () => {
+	const f = harness();
+	f.run(`10:30 Show the plan first\n  & 'C:\\Tools\\bootstrap.ps1' -App 'OAuth'\n${"x".repeat(80)}`);
+	f.run("14:00 short\n\nsecond line");
+	f.notes.length = 0;
+	f.run("list");
+	assert.deepEqual(f.notes, [
+		[
+			"info",
+			"I   10:30  2h06m  Show the plan first & 'C:\\Tools\\bootstrap.ps1' -App 'OAuth'…\n" +
+				"II  14:00  5h36m  short second line",
+		],
+	]);
+	assert.equal(f.mox.list()[1].message, "short\n\nsecond line");
+});
+
+test("/mox list keeps a 60-character message and cuts a 61-character one to 59 plus …", () => {
+	const f = harness();
+	f.run(`10:30 ${"a".repeat(60)}`);
+	f.run(`14:00 ${"b".repeat(61)}`);
+	f.notes.length = 0;
+	f.run("list");
+	assert.deepEqual(f.notes, [["info", `I   10:30  2h06m  ${"a".repeat(60)}\nII  14:00  5h36m  ${"b".repeat(59)}…`]]);
+});
+
+test("/mox show <id> shows the whole message verbatim, by Roman or Arabic id", () => {
+	const f = harness();
+	const long = `Show the plan first\n  & 'C:\\Tools\\bootstrap.ps1' -App 'OAuth'\n${"x".repeat(80)}`;
+	f.run(`10:30 ${long}`);
+	f.notes.length = 0;
+	f.run("show I");
+	f.run("show 1");
+	assert.deepEqual(f.notes, [["info", `I  10:30  2h06m\n${long}`], ["info", `I  10:30  2h06m\n${long}`]]);
+});
+
+test("/mox show rejects a missing, invalid or unknown id and changes nothing", () => {
+	const f = harness();
+	f.run("10:30 one");
+	f.notes.length = 0;
+	f.run("show");
+	f.run("show abc");
+	f.run("show V");
+	assert.deepEqual(f.notes, [
+		["error", `Missing cue id.\n${USAGE}`],
+		["error", `Invalid cue id "abc".\n${USAGE}`],
+		["error", `No pending cue V.\n${USAGE}`],
+	]);
+	assert.deepEqual(f.mox.list(), [{ id: 1, at: at(10, 30), message: "one" }]);
 });
 
 test("/mox list orders by time, not by id", () => {
@@ -377,7 +427,9 @@ test("completions: subcommands, then pending ids after cancel", () => {
 	f.run("14:00 later");
 	f.run("10:30 sooner");
 	const values = (prefix: string) => completeMoxArgs(prefix, f.mox)?.map((item) => item.value) ?? null;
-	assert.deepEqual(values(""), ["list", "cancel"]);
+	assert.deepEqual(values(""), ["list", "show", "cancel"]);
+	assert.deepEqual(values("s"), ["show"]);
+	assert.deepEqual(values("show "), ["show I", "show II"]);
 	assert.deepEqual(values("c"), ["cancel"]);
 	assert.deepEqual(values("l"), ["list"]);
 	assert.deepEqual(values("10"), null);

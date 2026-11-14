@@ -148,7 +148,7 @@ test("the command completes subcommands and pending ids", async () => {
 	const s = setup();
 	await s.commands.get("mox").handler("10:30 one", s.ctx);
 	const complete = s.commands.get("mox").getArgumentCompletions;
-	assert.deepEqual(complete("").map((i: { value: string }) => i.value), ["list", "cancel"]);
+	assert.deepEqual(complete("").map((i: { value: string }) => i.value), ["list", "show", "cancel"]);
 	assert.deepEqual(complete("cancel ").map((i: { value: string }) => i.value), ["cancel I"]);
 	assert.equal(complete("x"), null);
 });
