@@ -1,6 +1,6 @@
 {
   "name": "pi-mox",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Schedule a message for the agent in Pi: /mox 10:30 <message> delivers it at that time and starts a turn.",
   "license": "MIT",
   "author": "jals1212",

@@ -5,6 +5,12 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+## 0.3.1
+
+### Changed
+
+- README: shorter Herdr section.
+
 ## 0.3.0
 
 ### Added
