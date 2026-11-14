@@ -1,7 +1,7 @@
 // pi-mox core: time parsing, Roman numerals, the cue list and its wall-clock scheduler, and the /mox command.
 // No Pi runtime imports here (see src/wire.ts for the wiring), so everything runs under plain `node --test`.
 
-export const USAGE = "Usage: /mox <time> <message>, /mox list, /mox cancel <id> (time: 10:30 or +2h15m)";
+export const USAGE = "Usage: /mox <time> <message>, /mox list, /mox show <id>, /mox cancel <id> (time: 10:30 or +2h15m)";
 
 /** A pending cue: a message to deliver at `at` (epoch milliseconds). `id` is shown as a Roman numeral. */
 export interface Cue {
@@ -236,6 +236,16 @@ export function createMox(options: MoxOptions): Mox {
 
 // --- Command ---
 
+const PREVIEW_CHARS = 60;
+
+/** One-line preview for lists: whitespace runs collapse to one space; over 60 characters it ends in `…`. */
+export function previewMessage(message: string): string {
+	const line = message.replace(/\s+/g, " ").trim();
+	return line.length > PREVIEW_CHARS ? `${line.slice(0, PREVIEW_CHARS - 1).trimEnd()}…` : line;
+}
+
+const parseId = (text: string) => (/^\d+$/.test(text) ? Number(text) : fromRoman(text));
+
 const dayStart = (ms: number) => new Date(new Date(ms).setHours(0, 0, 0, 0)).getTime();
 
 function dayLabel(at: number, now: number): string {
@@ -265,16 +275,26 @@ export function runMoxCommand(args: string, deps: CommandDeps): void {
 		return info(
 			cues
 				.map((cue) => {
-					const line = `${formatClock(cue.at)}  ${formatRemaining(cue.at - now)}  ${cue.message}`;
+					const line = `${formatClock(cue.at)}  ${formatRemaining(cue.at - now)}  ${previewMessage(cue.message)}`;
 					return `${paint(BRONZE, toRoman(cue.id).padEnd(width), ctx.hasUI)}  ${paint(MARBLE, line, ctx.hasUI)}`;
 				})
 				.join("\n"),
 		);
 	}
 
+	if (word === "show") {
+		if (rest === "") return fail("Missing cue id.");
+		const id = parseId(rest);
+		if (id === undefined || id < 1) return fail(`Invalid cue id "${rest}".`);
+		const cue = mox.list().find((candidate) => candidate.id === id);
+		if (!cue) return fail(`No pending cue ${toRoman(id)}.`);
+		const head = `${toRoman(cue.id)}  ${formatClock(cue.at)}  ${formatRemaining(cue.at - deps.now())}`;
+		return info(`${paint(BRONZE, head, ctx.hasUI)}\n${paint(MARBLE, cue.message, ctx.hasUI)}`);
+	}
+
 	if (word === "cancel") {
 		if (rest === "") return fail("Missing cue id.");
-		const id = /^\d+$/.test(rest) ? Number(rest) : fromRoman(rest);
+		const id = parseId(rest);
 		if (id === undefined || id < 1) return fail(`Invalid cue id "${rest}".`);
 		const cue = mox.cancel(id);
 		if (!cue) return fail(`No pending cue ${toRoman(id)}.`);
@@ -289,20 +309,24 @@ export function runMoxCommand(args: string, deps: CommandDeps): void {
 	info(`Scheduled ${toRoman(cue.id)} for ${formatClock(at)}${dayLabel(at, now)} (in ${formatRemaining(at - now)}): ${rest}`);
 }
 
-/** Autocompletion: `list`, `cancel`, and pending ids after `cancel`. */
+/** Autocompletion: `list`, `show`, `cancel`, and pending ids after `show` or `cancel`. */
 export function completeMoxArgs(prefix: string, mox: Mox): { value: string; label: string }[] | null {
 	const words = prefix.split(" ");
 	if (words.length === 1) {
-		const items = ["list", "cancel"].filter((sub) => sub.startsWith(words[0])).map((sub) => ({ value: sub, label: sub }));
+		const items = ["list", "show", "cancel"].filter((sub) => sub.startsWith(words[0])).map((sub) => ({ value: sub, label: sub }));
 		return items.length > 0 ? items : null;
 	}
-	if (words.length !== 2 || words[0] !== "cancel") return null;
+	const sub = words[0];
+	if (words.length !== 2 || (sub !== "cancel" && sub !== "show")) return null;
 	const typed = words[1].toUpperCase();
 	const items = mox
 		.list()
 		.sort((a, b) => a.id - b.id)
 		.filter((cue) => toRoman(cue.id).startsWith(typed) || String(cue.id).startsWith(typed))
-		.map((cue) => ({ value: `cancel ${toRoman(cue.id)}`, label: `${toRoman(cue.id)}  ${formatClock(cue.at)}  ${cue.message}` }));
+		.map((cue) => ({
+			value: `${sub} ${toRoman(cue.id)}`,
+			label: `${toRoman(cue.id)}  ${formatClock(cue.at)}  ${previewMessage(cue.message)}`,
+		}));
 	return items.length > 0 ? items : null;
 }
 

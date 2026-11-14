@@ -23,10 +23,11 @@ pi install npm:pi-mox
 | Command | What it does |
 | --- | --- |
 | `/mox <time> <message>` | Deliver `<message>` to the agent at `<time>` |
-| `/mox list` (or `/mox`) | Show the pending cues |
+| `/mox list` (or `/mox`) | Show the pending cues, each message on one line cut at 60 characters with `…` |
+| `/mox show <id>` | Show one cue with its whole message |
 | `/mox cancel <id>` | Cancel a cue; the id is Roman (`II`, `ii`) or Arabic (`2`) |
 
-`list` and `cancel` are reserved first words.
+`list`, `show` and `cancel` are reserved first words.
 
 ### Time
 
@@ -49,6 +50,10 @@ Scheduled II for 14:00 (in 5h36m): corre la suite
 /mox list
 I   10:30  2h06m  continúa con T3
 II  14:00  5h36m  corre la suite
+
+/mox show I
+I  10:30  2h06m
+continúa con T3
 
 /mox cancel II
 Cancelled II (14:00): corre la suite

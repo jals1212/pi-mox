@@ -5,6 +5,15 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+### Added
+
+- `/mox show <id>` shows one cue with its whole message.
+
+### Changed
+
+- `/mox list` and the id completions show each message on one line: whitespace and line breaks collapse to
+  one space, and a message over 60 characters is cut with `…`. `/mox show <id>` gives the whole message.
+
 ## 0.1.1
 
 ### Added
