@@ -21,6 +21,8 @@ export interface MoxOptions extends Timers {
 	send(cue: Cue): void;
 	/** Show the footer text, or clear it (`undefined`). */
 	setStatus(text: string | undefined): void;
+	/** Show the plain marker of the next cue (`·MOX· 10:30 <preview>`), or clear it (`undefined`). */
+	setMarker?(text: string | undefined): void;
 	onError?(error: unknown, cue: Cue): void;
 	/** Paint the footer with ANSI colors (only when there is a UI). */
 	color?(): boolean;
@@ -171,9 +173,19 @@ export function createMox(options: MoxOptions): Mox {
 		const next = sorted[0];
 		if (!next) return undefined;
 		const more = sorted.length > 1 ? ` (+${sorted.length - 1})` : "";
-		const rest = `${formatClock(next.at)} · ${formatRemainingRoman(next.at - options.now())}${more}`;
+		const rest = `${formatClock(next.at)} ${previewMessage(next.message)} · ${formatRemainingRoman(next.at - options.now())}${more}`;
 		const color = options.color?.() ?? false;
 		return `${paint(BRONZE, BRAND, color)} ${paint(MARBLE, rest, color)}`;
+	};
+
+	const markerText = (): string | undefined => {
+		const next = [...cues].sort(byTime)[0];
+		return next && `${BRAND} ${formatClock(next.at)} ${previewMessage(next.message)}`;
+	};
+
+	const show = () => {
+		options.setStatus(statusText());
+		options.setMarker?.(markerText());
 	};
 
 	const disarm = () => {
@@ -201,12 +213,12 @@ export function createMox(options: MoxOptions): Mox {
 				options.onError?.(error, cue);
 			}
 		}
-		options.setStatus(statusText());
+		show();
 		arm();
 	};
 
 	const changed = () => {
-		options.setStatus(statusText());
+		show();
 		arm();
 	};
 
@@ -230,6 +242,7 @@ export function createMox(options: MoxOptions): Mox {
 			cues = [];
 			nextId = 1;
 			options.setStatus(undefined);
+			options.setMarker?.(undefined);
 		},
 	};
 }

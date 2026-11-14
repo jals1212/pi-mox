@@ -14,7 +14,7 @@ test("/mox 10:30 <message> schedules it for later today and shows it in the foot
 	const f = harness();
 	f.run("10:30 continúa con T3");
 	assert.deepEqual(f.notes, [["info", "Scheduled I for 10:30 (in 2h06m): continúa con T3"]]);
-	assert.equal(f.status(), "·MOX· 10:30 · II h VI m");
+	assert.equal(f.status(), "·MOX· 10:30 continúa con T3 · II h VI m");
 	assert.deepEqual(f.mox.list(), [{ id: 1, at: at(10, 30), message: "continúa con T3" }]);
 	assert.deepEqual(f.sent, []);
 });
@@ -23,7 +23,7 @@ test("a time already passed is scheduled for tomorrow", () => {
 	const f = harness({ start: at(14, 0) });
 	f.run("10:30 buenos días");
 	assert.deepEqual(f.notes, [["info", "Scheduled I for 10:30 tomorrow (in 20h30m): buenos días"]]);
-	assert.equal(f.status(), "·MOX· 10:30 · XX h XXX m");
+	assert.equal(f.status(), "·MOX· 10:30 buenos días · XX h XXX m");
 	assert.equal(f.mox.list()[0].at, tomorrow(10, 30));
 });
 
@@ -31,7 +31,7 @@ test("a time equal to now is scheduled for tomorrow", () => {
 	const f = harness({ start: at(10, 30) });
 	f.run("10:30 again");
 	assert.deepEqual(f.notes, [["info", "Scheduled I for 10:30 tomorrow (in 24h00m): again"]]);
-	assert.equal(f.status(), "·MOX· 10:30 · XXIV h");
+	assert.equal(f.status(), "·MOX· 10:30 again · XXIV h");
 	assert.equal(f.mox.list()[0].at, tomorrow(10, 30));
 	assert.deepEqual(f.sent, []);
 });
@@ -40,17 +40,17 @@ test("relative times +2h15m, +90m and +45s", () => {
 	const a = harness();
 	a.run("+2h15m check build");
 	assert.deepEqual(a.notes, [["info", "Scheduled I for 10:39 (in 2h15m): check build"]]);
-	assert.equal(a.status(), "·MOX· 10:39 · II h XV m");
+	assert.equal(a.status(), "·MOX· 10:39 check build · II h XV m");
 
 	const b = harness();
 	b.run("+90m lunch");
 	assert.deepEqual(b.notes, [["info", "Scheduled I for 09:54 (in 1h30m): lunch"]]);
-	assert.equal(b.status(), "·MOX· 09:54 · I h XXX m");
+	assert.equal(b.status(), "·MOX· 09:54 lunch · I h XXX m");
 
 	const c = harness();
 	c.run("+45s quick");
 	assert.deepEqual(c.notes, [["info", "Scheduled I for 08:24 (in 1m): quick"]]);
-	assert.equal(c.status(), "·MOX· 08:24 · I m");
+	assert.equal(c.status(), "·MOX· 08:24 quick · I m");
 	assert.equal(c.mox.list()[0].at, at(8, 24, 45));
 });
 
@@ -214,7 +214,7 @@ test("cancelling reports the cue, updates the footer and stops it from firing", 
 	f.notes.length = 0;
 	f.run("cancel I");
 	assert.deepEqual(f.notes, [["info", "Cancelled I (10:30): one"]]);
-	assert.equal(f.status(), "·MOX· 14:00 · V h XXXVI m");
+	assert.equal(f.status(), "·MOX· 14:00 two · V h XXXVI m");
 	f.advance(10 * H);
 	assert.deepEqual(f.sent, [{ id: 2, at: at(14, 0), message: "two" }]);
 });
@@ -293,7 +293,7 @@ test("a cue fires once at its time and is removed", () => {
 	f.run("10:30 continúa con T3");
 	f.advance(2 * H + 5 * M);
 	assert.deepEqual(f.sent, []);
-	assert.equal(f.status(), "·MOX· 10:30 · I m");
+	assert.equal(f.status(), "·MOX· 10:30 continúa con T3 · I m");
 	f.advance(M);
 	assert.deepEqual(f.sent, [{ id: 1, at: at(10, 30), message: "continúa con T3" }]);
 	assert.deepEqual(f.mox.list(), []);
@@ -353,29 +353,29 @@ test("one timer at most, re-armed for at most 30 seconds, shorter when a cue is 
 test("the footer counts down as time passes", () => {
 	const f = harness();
 	f.run("10:30 one");
-	assert.equal(f.status(), "·MOX· 10:30 · II h VI m");
+	assert.equal(f.status(), "·MOX· 10:30 one · II h VI m");
 	f.advance(6 * M);
-	assert.equal(f.status(), "·MOX· 10:30 · II h");
+	assert.equal(f.status(), "·MOX· 10:30 one · II h");
 	f.advance(H + 30 * M + 31_000);
-	assert.equal(f.status(), "·MOX· 10:30 · XXX m");
+	assert.equal(f.status(), "·MOX· 10:30 one · XXX m");
 });
 
 test("the footer adds (+N) when more cues wait and shows the nearest first", () => {
 	const f = harness();
 	f.run("14:00 later");
-	assert.equal(f.status(), "·MOX· 14:00 · V h XXXVI m");
+	assert.equal(f.status(), "·MOX· 14:00 later · V h XXXVI m");
 	f.run("10:30 sooner");
-	assert.equal(f.status(), "·MOX· 10:30 · II h VI m (+1)");
+	assert.equal(f.status(), "·MOX· 10:30 sooner · II h VI m (+1)");
 	f.run("12:00 middle");
-	assert.equal(f.status(), "·MOX· 10:30 · II h VI m (+2)");
+	assert.equal(f.status(), "·MOX· 10:30 sooner · II h VI m (+2)");
 	f.run("cancel II");
-	assert.equal(f.status(), "·MOX· 12:00 · III h XXXVI m (+1)");
+	assert.equal(f.status(), "·MOX· 12:00 middle · III h XXXVI m (+1)");
 });
 
 test("with a UI the footer paints ·MOX· bronze and the rest marble", () => {
 	const f = harness({ hasUI: true });
 	f.run("10:30 a");
-	assert.equal(f.status(), `${BRONZE}·MOX·\x1b[39m ${MARBLE}10:30 · II h VI m\x1b[39m`);
+	assert.equal(f.status(), `${BRONZE}·MOX·\x1b[39m ${MARBLE}10:30 a · II h VI m\x1b[39m`);
 });
 
 test("a delivery failure is reported once, not retried, and the other cues still fire", () => {
@@ -443,4 +443,10 @@ test("completions: subcommands, then pending ids after cancel", () => {
 	assert.deepEqual(values("cancel "), ["cancel II"]);
 	f.mox.shutdown();
 	assert.deepEqual(values("cancel "), null);
+});
+
+test("the footer previews the next message on one line", () => {
+	const f = harness();
+	f.run(`10:30 revisar\n  el ${"x".repeat(70)}`);
+	assert.equal(f.status(), `·MOX· 10:30 revisar el ${"x".repeat(48)}… · II h VI m`);
 });

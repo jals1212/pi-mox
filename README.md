@@ -59,11 +59,11 @@ continúa con T3
 Cancelled II (14:00): corre la suite
 ```
 
-The footer shows the next cue, with the time left in Roman numerals (hours omitted at zero, minutes rounded
-up, under a minute shows `I m`), and `(+N)` when more cues wait:
+The footer shows the next cue with a one-line preview of its message, the time left in Roman numerals (hours
+omitted at zero, minutes rounded up, under a minute shows `I m`), and `(+N)` when more cues wait:
 
 ```
-·MOX· 10:30 · II h VI m (+1)
+·MOX· 10:30 revisar PR · II h VI m (+1)
 ```
 
 When a cue is due, the agent receives the message and the conversation shows:
@@ -83,6 +83,27 @@ Errors (bad time, missing message, unknown id) are shown with a usage line and c
 - **In memory.** Cues are kept only while Pi runs. Closing Pi (or ending the session) drops them.
 - **Wall clock.** The next cue is checked against the clock at least every 30 seconds, so a cue that came due
   while the computer was suspended is delivered as soon as it resumes. Timers never keep Pi from exiting.
+- **Herdr marker.** In a [Herdr](https://herdr.dev) pane (`HERDR_ENV=1`, `HERDR_PANE_ID`,
+  `HERDR_SOCKET_PATH`), the next cue is also the pane's `mox` metadata token, in plain text:
+  `·MOX· 10:30 revisar PR`. It is display only, reported again every 10 seconds with a 30-second TTL, so it
+  goes away when Pi does, and it is cleared when no cue is left. To show it, add a `$mox` row to the Agents
+  sidebar in Herdr's `config.toml`, then run `herdr server reload-config`:
+
+  ```toml
+  [ui.sidebar.agents]
+  rows = [
+    ["state_icon", "machine", "workspace", "tab"],
+    ["agent"],
+    [{ token = "$mox", rules = [{ contains = "·MOX·", fg = "#CD7F32" }] }],
+  ]
+  ```
+
+- **Herdr app marker.** In a terminal of the Herdr app (`HC_TERMINAL_ID`), the same text is the terminal's
+  `mox` label (`hc label <terminal> mox=<text>`). A label has no TTL: the session removes it when it ends.
+  The app's shipped Agents panel does not show labels; in a cloned `agents` mod, read
+  `terminals()[i].labels.mox` and add it to the agent's row (the same steps as ci-local's `ci` label). Try it
+  by hand with `hc label "$HC_TERMINAL_ID" mox="·MOX· 10:30 test"`, and remove it with
+  `hc label "$HC_TERMINAL_ID" mox=`.
 - **Ids.** Roman numerals counting up from `I` in each session; an id is never reused, even after a cue is
   cancelled or fired.
 
@@ -97,6 +118,7 @@ npm test
 - `src/mox.ts`: core with no Pi runtime imports: time parsing, Roman numerals, the cue list and scheduler
   (injectable clock and timers), the command runner.
 - `src/wire.ts`: connects the core to Pi's extension API.
+- `src/herdr.ts`: the Herdr marker: pane token over Herdr's socket, Herdr app label through `hc`.
 - `extensions/mox.ts`: the package's Pi extension entry.
 
 ## Releasing

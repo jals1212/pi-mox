@@ -5,6 +5,17 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+## 0.3.0
+
+### Added
+
+- Herdr marker: in a Herdr pane the next cue is the pane's `$mox` sidebar token, and in a Herdr app terminal
+  its `mox` label, as `·MOX· 10:30 <message preview>`. Cleared when no cue is left and when the session ends.
+
+### Changed
+
+- The footer previews the next message: `·MOX· 10:30 revisar PR · II h VI m (+1)`.
+
 ## 0.2.0
 
 ### Added
