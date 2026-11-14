@@ -50,7 +50,7 @@ export function registerMox(pi: ExtensionAPI, options: WireOptions): void {
 	});
 
 	pi.registerCommand("mox", {
-		description: "Schedule a message for the agent: /mox <10:30|+2h15m> <message>, /mox list, /mox cancel <id>",
+		description: "Schedule a message for the agent: /mox <10:30|+2h15m> <message>, /mox list, /mox show <id>, /mox cancel <id>",
 		getArgumentCompletions: (prefix) => completeMoxArgs(prefix, mox),
 		handler: async (args, ctx) => {
 			use(ctx);
