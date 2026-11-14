@@ -83,27 +83,16 @@ Errors (bad time, missing message, unknown id) are shown with a usage line and c
 - **In memory.** Cues are kept only while Pi runs. Closing Pi (or ending the session) drops them.
 - **Wall clock.** The next cue is checked against the clock at least every 30 seconds, so a cue that came due
   while the computer was suspended is delivered as soon as it resumes. Timers never keep Pi from exiting.
-- **Herdr marker.** In a [Herdr](https://herdr.dev) pane (`HERDR_ENV=1`, `HERDR_PANE_ID`,
-  `HERDR_SOCKET_PATH`), the next cue is also the pane's `mox` metadata token, in plain text:
-  `·MOX· 10:30 revisar PR`. It is display only, reported again every 10 seconds with a 30-second TTL, so it
-  goes away when Pi does, and it is cleared when no cue is left. To show it, add a `$mox` row to the Agents
-  sidebar in Herdr's `config.toml`, then run `herdr server reload-config`:
+- **Herdr.** In [Herdr](https://herdr.dev), the next cue is published as the `mox` token
+  (`·MOX· 10:30 revisar PR`), cleared when no cue is left. To show it, add a `$mox` row to the Agents sidebar
+  in Herdr's `config.toml` and run `herdr server reload-config`:
 
   ```toml
   [ui.sidebar.agents]
-  rows = [
-    ["state_icon", "machine", "workspace", "tab"],
-    ["agent"],
-    [{ token = "$mox", rules = [{ contains = "·MOX·", fg = "#CD7F32" }] }],
-  ]
+  rows = [["agent"], ["$mox"]]
   ```
 
-- **Herdr app marker.** In a terminal of the Herdr app (`HC_TERMINAL_ID`), the same text is the terminal's
-  `mox` label (`hc label <terminal> mox=<text>`). A label has no TTL: the session removes it when it ends.
-  The app's shipped Agents panel does not show labels; in a cloned `agents` mod, read
-  `terminals()[i].labels.mox` and add it to the agent's row (the same steps as ci-local's `ci` label). Try it
-  by hand with `hc label "$HC_TERMINAL_ID" mox="·MOX· 10:30 test"`, and remove it with
-  `hc label "$HC_TERMINAL_ID" mox=`.
+  In the Herdr app the same text is the terminal's `mox` label.
 - **Ids.** Roman numerals counting up from `I` in each session; an id is never reused, even after a cue is
   cancelled or fired.
 
