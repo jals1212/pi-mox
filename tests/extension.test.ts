@@ -48,6 +48,7 @@ function setup(options: { hasUI?: boolean; sendThrows?: boolean } = {}) {
 			clearTimer: (h) => void timers.delete(h as number),
 		},
 		stderr: (text) => void stderr.push(text),
+		env: {},
 	});
 	const ctx = {
 		hasUI: options.hasUI ?? true,
@@ -83,7 +84,7 @@ test("at its time the message is delivered verbatim as a followUp that triggers 
 	const s = setup();
 	await s.commands.get("mox").handler("10:30 continúa con T3", s.ctx);
 	assert.deepEqual(s.notes, [["info", "Scheduled I for 10:30 (in 2h06m): continúa con T3"]]);
-	assert.deepEqual(s.statuses.at(-1), ["mox", "\x1b[38;2;205;127;50m·MOX·\x1b[39m \x1b[38;2;184;184;176m10:30 · II h VI m\x1b[39m"]);
+	assert.deepEqual(s.statuses.at(-1), ["mox", "\x1b[38;2;205;127;50m·MOX·\x1b[39m \x1b[38;2;184;184;176m10:30 continúa con T3 · II h VI m\x1b[39m"]);
 	assert.deepEqual(s.sent, []);
 	s.advance(2 * H + 6 * 60_000);
 	assert.equal(s.sent.length, 1);
