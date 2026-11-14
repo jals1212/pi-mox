@@ -5,6 +5,8 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+## 0.3.0
+
 ### Added
 
 - Herdr marker: in a Herdr pane the next cue is the pane's `$mox` sidebar token, and in a Herdr app terminal
