@@ -5,6 +5,8 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+## 0.3.2
+
 ### Changed
 
 - The footer adds the time left in Arabic digits after the Roman one: `II h VI m (2h06m)`.
