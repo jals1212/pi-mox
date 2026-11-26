@@ -89,7 +89,7 @@ export function registerMox(pi: ExtensionAPI, options: WireOptions): void {
 	});
 
 	pi.registerCommand("mox", {
-		description: "Schedule a message for the agent: /mox <10:30|+2h15m> <message>, /mox list, /mox show <id>, /mox cancel <id>",
+		description: "Schedule a message for the agent: /mox <10:30|7:54pm|+2h15m> <message>, /mox list, /mox show <id>, /mox cancel <id>",
 		getArgumentCompletions: (prefix) => completeMoxArgs(prefix, mox),
 		handler: async (args, ctx) => {
 			use(ctx);
@@ -103,7 +103,7 @@ export function registerMox(pi: ExtensionAPI, options: WireOptions): void {
 		label: "Mox",
 		description:
 			`Schedule a message for yourself: at its time it is delivered to you and starts a new turn (or waits for the current one). ` +
-			`action "schedule" needs time ("10:30", 24-hour, today or tomorrow if already past; or "+2h15m", "+90m", "+45s") and message; ` +
+			`action "schedule" needs time ("10:30", 24-hour, or "7:54pm", 12-hour, today or tomorrow if already past; or "+2h15m", "+90m", "+45s") and message; ` +
 			`"list" shows every pending cue, yours marked (agent); "cancel" needs the id ("II" or "2") of a cue you scheduled. ` +
 			`At most ${MAX_AGENT_CUES} of your cues can be pending. Cues live only while Pi runs.`,
 		promptSnippet: "Schedule a message for yourself at a later time, list or cancel your scheduled messages",
@@ -115,7 +115,7 @@ export function registerMox(pi: ExtensionAPI, options: WireOptions): void {
 			type: "object",
 			properties: {
 				action: { type: "string", enum: ["schedule", "list", "cancel"], description: "What to do" },
-				time: { type: "string", description: 'For schedule: "10:30" (24-hour) or "+2h15m"' },
+				time: { type: "string", description: 'For schedule: "10:30" (24-hour), "7:54pm" (12-hour) or "+2h15m"' },
 				message: { type: "string", description: "For schedule: the message delivered to you, verbatim" },
 				id: { type: "string", description: 'For cancel: the cue id, "II" or "2"' },
 			},

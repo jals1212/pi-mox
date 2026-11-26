@@ -34,6 +34,26 @@ test("an absolute time equal to now is tomorrow", () => {
 	assert.equal(parseSchedule("10:30", at(10, 30)), new Date(2026, 4, 13, 10, 30).getTime());
 });
 
+test("a 12-hour time with am or pm is today or tomorrow like a 24-hour time", () => {
+	assert.equal(parseSchedule("7:54pm", at(8, 24)), at(19, 54));
+	assert.equal(parseSchedule("8:16am", at(8, 0)), at(8, 16));
+	assert.equal(parseSchedule("8:16AM", at(8, 0)), at(8, 16));
+	assert.equal(parseSchedule("7:54Pm", at(8, 24)), at(19, 54));
+	assert.equal(parseSchedule("12:05pm", at(8, 24)), at(12, 5));
+	assert.equal(parseSchedule("12:05am", at(8, 24)), new Date(2026, 4, 13, 0, 5).getTime());
+	assert.equal(parseSchedule("08:16am", at(8, 24)), new Date(2026, 4, 13, 8, 16).getTime());
+});
+
+test("12-hour edge cases around midnight and noon", () => {
+	const now = at(8, 24);
+	const tomorrow = (h: number, m: number) => new Date(2026, 4, 13, h, m).getTime();
+	assert.equal(parseSchedule("12:00am", now), tomorrow(0, 0));
+	assert.equal(parseSchedule("12:59pm", now), at(12, 59));
+	assert.equal(parseSchedule("1:00am", now), tomorrow(1, 0));
+	assert.equal(parseSchedule("11:59PM", now), at(23, 59));
+	for (const bad of ["00:30am", "00:30pm", "012:00pm"]) assert.equal(parseSchedule(bad, now), undefined, bad);
+});
+
 test("a relative time adds hours, minutes and seconds to now", () => {
 	assert.equal(parseSchedule("+2h15m", at(8, 24)), at(10, 39));
 	assert.equal(parseSchedule("+90m", at(8, 24)), at(9, 54));
@@ -43,7 +63,7 @@ test("a relative time adds hours, minutes and seconds to now", () => {
 });
 
 test("invalid times are rejected", () => {
-	for (const bad of ["24:00", "10:60", "1030", "10:5", "+0m", "+0h0m0s", "+", "+2x", "+15m2h", "+2h 15m", "-5m", "abc", "", "10:30:00", "+99999999h"])
+	for (const bad of ["24:00", "10:60", "1030", "10:5", "+0m", "+0h0m0s", "+", "+2x", "+15m2h", "+2h 15m", "-5m", "abc", "", "10:30:00", "+99999999h", "0:30am", "13:00pm", "7:60pm", "7pm", "7:54 pm", "7:54p", "7:54pmx"])
 		assert.equal(parseSchedule(bad, at(8, 24)), undefined, JSON.stringify(bad));
 });
 

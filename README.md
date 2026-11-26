@@ -33,6 +33,8 @@ pi install npm:pi-mox
 
 - Absolute: `10:30` or `9:05`, 24-hour (`0:00`–`23:59`). Today at that time; if it is equal to or before now,
   tomorrow. `24:00`, `10:60` and `1030` are rejected.
+- Absolute, 12-hour: `7:54pm` or `8:16am` (`am`/`pm` in any case, no space, `1:00`–`12:59`). `12:05am` is just
+  after midnight and `12:05pm` just after noon. Same today-or-tomorrow rule; `0:30am` and `13:00pm` are rejected.
 - Relative: `+` followed by `<n>h`, `<n>m`, `<n>s` in that order: `+2h15m`, `+90m`, `+45s`, `+1h30s`.
   The total must be above zero.
 

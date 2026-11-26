@@ -66,7 +66,7 @@ test("invalid times are rejected with the usage line and change nothing", () => 
 	f.notes.length = 0;
 	const statuses = f.statuses.length;
 	const timers = f.setCalls.length;
-	for (const bad of ["24:00", "10:60", "1030", "+0m", "+", "10:5", "+2x", "soon"]) {
+	for (const bad of ["24:00", "10:60", "1030", "+0m", "+", "10:5", "+2x", "soon", "13:00pm", "0:30am"]) {
 		f.run(`${bad} message`);
 		const [type, text] = f.notes.pop()!;
 		assert.equal(type, "error", bad);
@@ -88,7 +88,7 @@ test("a missing message is rejected and changes nothing", () => {
 });
 
 test("the usage line names the four forms", () => {
-	assert.equal(USAGE, "Usage: /mox <time> <message>, /mox list, /mox show <id>, /mox cancel <id> (time: 10:30 or +2h15m)");
+	assert.equal(USAGE, "Usage: /mox <time> <message>, /mox list, /mox show <id>, /mox cancel <id> (time: 10:30, 7:54pm or +2h15m)");
 });
 
 // S4, S8: list.

@@ -1,7 +1,7 @@
 // pi-mox core: time parsing, Roman numerals, the cue list and its wall-clock scheduler, and the /mox command.
 // No Pi runtime imports here (see src/wire.ts for the wiring), so everything runs under plain `node --test`.
 
-export const USAGE = "Usage: /mox <time> <message>, /mox list, /mox show <id>, /mox cancel <id> (time: 10:30 or +2h15m)";
+export const USAGE = "Usage: /mox <time> <message>, /mox list, /mox show <id>, /mox cancel <id> (time: 10:30, 7:54pm or +2h15m)";
 
 /** A pending cue: a message to deliver at `at` (epoch milliseconds). `id` is shown as a Roman numeral. */
 export interface Cue {
@@ -121,19 +121,25 @@ export function formatRemainingRoman(ms: number): string {
 	return parts.join(" ");
 }
 
-const ABSOLUTE = /^(\d{1,2}):(\d{2})$/;
+const ABSOLUTE = /^(\d{1,2}):(\d{2})(am|pm)?$/i;
 const RELATIVE = /^\+(?:(\d{1,7})h)?(?:(\d{1,7})m)?(?:(\d{1,7})s)?$/;
 
 /**
  * Epoch milliseconds for a time token, or undefined when it is not valid.
- * `H:MM`/`HH:MM` (24-hour) is today, or tomorrow when that time is not after `now`;
+ * `H:MM`/`HH:MM` (24-hour) or `H:MMam`/`H:MMpm` (12-hour, any case) is today, or tomorrow when that time
+ * is not after `now`;
  * `+2h15m`, `+90m`, `+45s` (h, m, s in that order, total > 0) is that long from `now`.
  */
 export function parseSchedule(token: string, now: number): number | undefined {
 	const abs = ABSOLUTE.exec(token);
 	if (abs) {
-		const hours = Number(abs[1]);
+		let hours = Number(abs[1]);
 		const minutes = Number(abs[2]);
+		const meridiem = abs[3]?.toLowerCase();
+		if (meridiem !== undefined) {
+			if (hours < 1 || hours > 12) return undefined;
+			hours = (hours % 12) + (meridiem === "pm" ? 12 : 0);
+		}
 		if (hours > 23 || minutes > 59) return undefined;
 		const target = new Date(now);
 		target.setHours(hours, minutes, 0, 0);
@@ -350,7 +356,7 @@ export interface ToolParams {
 	id?: string;
 }
 
-const TIME_HINT = "Use 10:30 (24-hour) or +2h15m.";
+const TIME_HINT = "Use 10:30 (24-hour), 7:54pm or +2h15m.";
 
 /**
  * The agent's `mox` tool: schedule (at most MAX_AGENT_CUES pending), list every cue, or cancel one of its own.
