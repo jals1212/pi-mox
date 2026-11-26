@@ -5,6 +5,13 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+## 0.4.1
+
+### Changed
+
+- A test pins the `(agent)` mark in the Herdr pane token and app label.
+- The repository ignores macOS `.DS_Store` files.
+
 ## 0.4.0
 
 ### Added
