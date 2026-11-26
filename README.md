@@ -60,10 +60,11 @@ Cancelled II (14:00): corre la suite
 ```
 
 The footer shows the next cue with a one-line preview of its message, the time left in Roman numerals (hours
-omitted at zero, minutes rounded up, under a minute shows `I m`), and `(+N)` when more cues wait:
+omitted at zero, minutes rounded up, under a minute shows `I m`) followed by the same time in Arabic digits, and
+`(+N)` when more cues wait:
 
 ```
-·MOX· 10:30 revisar PR · II h VI m (+1)
+·MOX· 10:30 revisar PR · II h VI m (2h06m) (+1)
 ```
 
 When a cue is due, the agent receives the message and the conversation shows:
