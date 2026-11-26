@@ -3,7 +3,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { Text } from "@earendil-works/pi-tui";
 import { createHerdrPublisher, HERDR_REFRESH_MS, herdrAppSend, herdrAppTerminal, herdrPane, herdrSend, type HerdrSend } from "./herdr.ts";
-import { completeMoxArgs, createMox, defaultTimers, renderMoxText, runMoxCommand, toRoman, type Timers } from "./mox.ts";
+import { completeMoxArgs, createMox, defaultTimers, MAX_AGENT_CUES, renderMoxText, runMoxCommand, runMoxTool, toRoman, type Timers, type ToolParams } from "./mox.ts";
 
 export interface WireOptions {
 	Text: typeof Text;
@@ -96,6 +96,38 @@ export function registerMox(pi: ExtensionAPI, options: WireOptions): void {
 			runMoxCommand(args, { ctx: { hasUI: ctx.hasUI, ui: { notify } }, mox, now });
 		},
 	});
+
+	// The agent's own way to schedule: the same cues as /mox, marked as the agent's, bounded and self-cancellable only.
+	pi.registerTool({
+		name: "mox",
+		label: "Mox",
+		description:
+			`Schedule a message for yourself: at its time it is delivered to you and starts a new turn (or waits for the current one). ` +
+			`action "schedule" needs time ("10:30", 24-hour, today or tomorrow if already past; or "+2h15m", "+90m", "+45s") and message; ` +
+			`"list" shows every pending cue, yours marked (agent); "cancel" needs the id ("II" or "2") of a cue you scheduled. ` +
+			`At most ${MAX_AGENT_CUES} of your cues can be pending. Cues live only while Pi runs.`,
+		promptSnippet: "Schedule a message for yourself at a later time, list or cancel your scheduled messages",
+		promptGuidelines: [
+			"Use the mox tool to continue work later, for example after a stated wait or a quota reset time; write the message as the instruction you will need then.",
+			`The mox tool allows at most ${MAX_AGENT_CUES} pending cues of yours and cancels only cues you scheduled; never schedule from a delivered cue just to keep yourself running.`,
+		],
+		parameters: {
+			type: "object",
+			properties: {
+				action: { type: "string", enum: ["schedule", "list", "cancel"], description: "What to do" },
+				time: { type: "string", description: 'For schedule: "10:30" (24-hour) or "+2h15m"' },
+				message: { type: "string", description: "For schedule: the message delivered to you, verbatim" },
+				id: { type: "string", description: 'For cancel: the cue id, "II" or "2"' },
+			},
+			required: ["action"],
+			additionalProperties: false,
+		} as never,
+		executionMode: "sequential",
+		async execute(_toolCallId: string, params: ToolParams, _signal: unknown, _onUpdate: unknown, ctx: ExtensionContext) {
+			use(ctx);
+			return { content: [{ type: "text" as const, text: runMoxTool(params, { mox, now }) }], details: undefined };
+		},
+	} as never);
 
 	pi.on("session_start", async (_event, ctx) => {
 		use(ctx);
