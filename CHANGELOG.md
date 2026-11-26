@@ -5,6 +5,10 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+### Added
+
+- 12-hour absolute times with `am`/`pm`, such as `7:54pm` and `8:16am`, in `/mox` and the `mox` tool.
+
 ## 0.4.1
 
 ### Changed

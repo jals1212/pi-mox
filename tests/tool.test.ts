@@ -24,9 +24,9 @@ test("an agent cue is delivered like any other cue", () => {
 test("schedule rejects a bad time, a missing time or a missing message and changes nothing", () => {
 	const h = harness();
 	const cases: [Parameters<typeof runMoxTool>[0], string][] = [
-		[{ action: "schedule", time: "24:00", message: "x" }, 'Invalid time "24:00". Use 10:30 (24-hour) or +2h15m.'],
-		[{ action: "schedule", time: "+0m", message: "x" }, 'Invalid time "+0m". Use 10:30 (24-hour) or +2h15m.'],
-		[{ action: "schedule", message: "x" }, "Missing time. Use 10:30 (24-hour) or +2h15m."],
+		[{ action: "schedule", time: "24:00", message: "x" }, 'Invalid time "24:00". Use 10:30 (24-hour), 7:54pm or +2h15m.'],
+		[{ action: "schedule", time: "+0m", message: "x" }, 'Invalid time "+0m". Use 10:30 (24-hour), 7:54pm or +2h15m.'],
+		[{ action: "schedule", message: "x" }, "Missing time. Use 10:30 (24-hour), 7:54pm or +2h15m."],
 		[{ action: "schedule", time: "10:30", message: "   " }, "Missing message."],
 		[{ action: "schedule", time: "10:30" }, "Missing message."],
 	];
