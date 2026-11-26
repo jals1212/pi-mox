@@ -105,7 +105,7 @@ export function formatRemaining(ms: number): string {
 	return hours > 0 ? `${hours}h${pad2(total % 60)}m` : `${total}m`;
 }
 
-/** Remaining time for the footer, in Roman numerals: `II h VI m`; hours omitted at 0, minutes at 0. */
+/** Remaining time in Roman numerals: `II h VI m`; hours omitted at 0, minutes at 0. The footer pairs it with `formatRemaining`. */
 export function formatRemainingRoman(ms: number): string {
 	const total = minutesLeft(ms);
 	const hours = Math.floor(total / 60);
@@ -173,7 +173,8 @@ export function createMox(options: MoxOptions): Mox {
 		const next = sorted[0];
 		if (!next) return undefined;
 		const more = sorted.length > 1 ? ` (+${sorted.length - 1})` : "";
-		const rest = `${formatClock(next.at)} ${previewMessage(next.message)} · ${formatRemainingRoman(next.at - options.now())}${more}`;
+		const left = next.at - options.now();
+		const rest = `${formatClock(next.at)} ${previewMessage(next.message)} · ${formatRemainingRoman(left)} (${formatRemaining(left)})${more}`;
 		const color = options.color?.() ?? false;
 		return `${paint(BRONZE, BRAND, color)} ${paint(MARBLE, rest, color)}`;
 	};
