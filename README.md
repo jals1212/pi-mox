@@ -75,6 +75,29 @@ When a cue is due, the agent receives the message and the conversation shows:
 
 Errors (bad time, missing message, unknown id) are shown with a usage line and change nothing.
 
+### The agent schedules too
+
+The agent gets a `mox` tool with the same cues, so it can schedule its own next step ("the quota resets at
+10:30, continue then"):
+
+| Action | Parameters | What it does |
+| --- | --- | --- |
+| `schedule` | `time`, `message` | Same time grammar as `/mox`; answers `Scheduled I for 10:30 (in 2h06m): <message>` |
+| `list` | | Every pending cue, the user's and the agent's, in plain text |
+| `cancel` | `id` | Cancels a cue the agent scheduled; cues the user scheduled are refused |
+
+- **Limit.** At most 3 cues scheduled by the agent can be pending at once; one more is refused with
+  `The agent already has 3 pending cues, the limit. Cancel one or wait for one to be delivered.`
+  The user's cues do not count.
+- **Marked.** Cues the agent scheduled end in `(agent)` in `/mox list`, `/mox show`, the footer and the Herdr
+  marker. The user can show and cancel them with `/mox` as any other cue.
+
+```
+/mox list
+II  10:30  2h06m  continúa con T3 (agent)
+I   14:00  5h36m  corre la suite
+```
+
 ## Behavior
 
 - **Delivery.** The message is sent as a follow-up that triggers a turn: when Pi is idle a turn starts at

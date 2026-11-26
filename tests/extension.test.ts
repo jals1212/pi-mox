@@ -22,6 +22,7 @@ function setup(options: { hasUI?: boolean; sendThrows?: boolean } = {}) {
 	let handle = 0;
 	const timers = new Map<number, { fireAt: number; fn: () => void }>();
 	const commands = new Map<string, any>();
+	const tools = new Map<string, any>();
 	const renderers = new Map<string, any>();
 	const events = new Map<string, (event: unknown, ctx: unknown) => unknown>();
 	const sent: { message: any; options: any }[] = [];
@@ -30,6 +31,7 @@ function setup(options: { hasUI?: boolean; sendThrows?: boolean } = {}) {
 	const stderr: string[] = [];
 	const pi = {
 		registerCommand: (name: string, command: unknown) => void commands.set(name, command),
+		registerTool: (tool: { name: string }) => void tools.set(tool.name, tool),
 		registerMessageRenderer: (type: string, renderer: unknown) => void renderers.set(type, renderer),
 		on: (event: string, fn: (event: unknown, ctx: unknown) => unknown) => void events.set(event, fn),
 		sendMessage: (message: unknown, opts: unknown) => {
@@ -68,7 +70,7 @@ function setup(options: { hasUI?: boolean; sendThrows?: boolean } = {}) {
 		}
 		t = Math.max(t, end);
 	};
-	return { commands, renderers, events, sent, notes, statuses, stderr, timers, ctx, advance };
+	return { commands, tools, renderers, events, sent, notes, statuses, stderr, timers, ctx, advance };
 }
 
 test("registers /mox, the mox message renderer, and the session hooks", () => {
@@ -143,6 +145,23 @@ test("without a UI the notifications go to stderr and the footer is not touched"
 	assert.equal(s.stderr[1], "I   10:30  2h06m  one\n");
 	s.advance(3 * H);
 	assert.equal(s.sent.length, 1);
+});
+
+test("registers the mox tool for the agent; its cues reach the footer and are delivered", async () => {
+	const s = setup();
+	const tool = s.tools.get("mox");
+	assert.ok(tool);
+	assert.equal(tool.executionMode, "sequential");
+	assert.deepEqual(tool.parameters.required, ["action"]);
+	assert.deepEqual(tool.parameters.properties.action.enum, ["schedule", "list", "cancel"]);
+	assert.ok(tool.promptGuidelines.every((line: string) => line.includes("mox tool")));
+	const result = await tool.execute("call-1", { action: "schedule", time: "+1m", message: "go on" }, undefined, undefined, s.ctx);
+	assert.deepEqual(result, { content: [{ type: "text", text: "Scheduled I for 08:25 (in 1m): go on" }], details: undefined });
+	assert.match(s.statuses.at(-1)?.[1] ?? "", /go on \(agent\)/);
+	await assert.rejects(tool.execute("call-2", { action: "cancel", id: "IX" }, undefined, undefined, s.ctx), { message: "No pending cue IX." });
+	s.advance(60_000);
+	assert.equal(s.sent.length, 1);
+	assert.equal(s.sent[0].message.content, "go on");
 });
 
 test("the command completes subcommands and pending ids", async () => {

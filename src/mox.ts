@@ -8,7 +8,12 @@ export interface Cue {
 	id: number;
 	at: number;
 	message: string;
+	/** Set when the agent scheduled the cue through the `mox` tool; absent for the user's `/mox`. */
+	by?: "agent";
 }
+
+/** Most cues the agent may have pending at once, so an agent that keeps scheduling itself stays bounded. */
+export const MAX_AGENT_CUES = 3;
 
 export interface Timers {
 	setTimer(fn: () => void, ms: number): unknown;
@@ -29,7 +34,7 @@ export interface MoxOptions extends Timers {
 }
 
 export interface Mox {
-	add(at: number, message: string): Cue;
+	add(at: number, message: string, by?: "agent"): Cue;
 	cancel(id: number): Cue | undefined;
 	/** Pending cues, nearest first. */
 	list(): Cue[];
@@ -174,14 +179,14 @@ export function createMox(options: MoxOptions): Mox {
 		if (!next) return undefined;
 		const more = sorted.length > 1 ? ` (+${sorted.length - 1})` : "";
 		const left = next.at - options.now();
-		const rest = `${formatClock(next.at)} ${previewMessage(next.message)} · ${formatRemainingRoman(left)} (${formatRemaining(left)})${more}`;
+		const rest = `${formatClock(next.at)} ${cueLabel(next)} · ${formatRemainingRoman(left)} (${formatRemaining(left)})${more}`;
 		const color = options.color?.() ?? false;
 		return `${paint(BRONZE, BRAND, color)} ${paint(MARBLE, rest, color)}`;
 	};
 
 	const markerText = (): string | undefined => {
 		const next = [...cues].sort(byTime)[0];
-		return next && `${BRAND} ${formatClock(next.at)} ${previewMessage(next.message)}`;
+		return next && `${BRAND} ${formatClock(next.at)} ${cueLabel(next)}`;
 	};
 
 	const show = () => {
@@ -224,8 +229,8 @@ export function createMox(options: MoxOptions): Mox {
 	};
 
 	return {
-		add(at, message) {
-			const cue = { id: nextId++, at, message };
+		add(at, message, by) {
+			const cue: Cue = by ? { id: nextId++, at, message, by } : { id: nextId++, at, message };
 			cues.push(cue);
 			changed();
 			return cue;
@@ -258,7 +263,30 @@ export function previewMessage(message: string): string {
 	return line.length > PREVIEW_CHARS ? `${line.slice(0, PREVIEW_CHARS - 1).trimEnd()}…` : line;
 }
 
+const AGENT_TAG = " (agent)";
+
+const agentTag = (cue: Cue) => (cue.by === "agent" ? AGENT_TAG : "");
+
+/** Footer and list text of a cue: its one-line preview, marked when the agent scheduled it. */
+const cueLabel = (cue: Cue) => `${previewMessage(cue.message)}${agentTag(cue)}`;
+
 const parseId = (text: string) => (/^\d+$/.test(text) ? Number(text) : fromRoman(text));
+
+/** `I   10:30  2h06m  <preview>` lines, nearest first; ids padded to a common width. */
+function listLines(cues: Cue[], now: number, color: boolean): string {
+	const width = Math.max(2, ...cues.map((cue) => toRoman(cue.id).length));
+	return cues
+		.map((cue) => {
+			const line = `${formatClock(cue.at)}  ${formatRemaining(cue.at - now)}  ${cueLabel(cue)}`;
+			return `${paint(BRONZE, toRoman(cue.id).padEnd(width), color)}  ${paint(MARBLE, line, color)}`;
+		})
+		.join("\n");
+}
+
+const scheduledText = (cue: Cue, now: number) =>
+	`Scheduled ${toRoman(cue.id)} for ${formatClock(cue.at)}${dayLabel(cue.at, now)} (in ${formatRemaining(cue.at - now)}): ${cue.message}`;
+
+const cancelledText = (cue: Cue) => `Cancelled ${toRoman(cue.id)} (${formatClock(cue.at)}): ${cue.message}`;
 
 const dayStart = (ms: number) => new Date(new Date(ms).setHours(0, 0, 0, 0)).getTime();
 
@@ -284,16 +312,7 @@ export function runMoxCommand(args: string, deps: CommandDeps): void {
 		if (rest !== "") return fail("list takes no arguments.");
 		const cues = mox.list();
 		if (cues.length === 0) return info("No pending cues.");
-		const now = deps.now();
-		const width = Math.max(2, ...cues.map((cue) => toRoman(cue.id).length));
-		return info(
-			cues
-				.map((cue) => {
-					const line = `${formatClock(cue.at)}  ${formatRemaining(cue.at - now)}  ${previewMessage(cue.message)}`;
-					return `${paint(BRONZE, toRoman(cue.id).padEnd(width), ctx.hasUI)}  ${paint(MARBLE, line, ctx.hasUI)}`;
-				})
-				.join("\n"),
-		);
+		return info(listLines(cues, deps.now(), ctx.hasUI));
 	}
 
 	if (word === "show") {
@@ -302,7 +321,7 @@ export function runMoxCommand(args: string, deps: CommandDeps): void {
 		if (id === undefined || id < 1) return fail(`Invalid cue id "${rest}".`);
 		const cue = mox.list().find((candidate) => candidate.id === id);
 		if (!cue) return fail(`No pending cue ${toRoman(id)}.`);
-		const head = `${toRoman(cue.id)}  ${formatClock(cue.at)}  ${formatRemaining(cue.at - deps.now())}`;
+		const head = `${toRoman(cue.id)}  ${formatClock(cue.at)}  ${formatRemaining(cue.at - deps.now())}${agentTag(cue)}`;
 		return info(`${paint(BRONZE, head, ctx.hasUI)}\n${paint(MARBLE, cue.message, ctx.hasUI)}`);
 	}
 
@@ -312,15 +331,62 @@ export function runMoxCommand(args: string, deps: CommandDeps): void {
 		if (id === undefined || id < 1) return fail(`Invalid cue id "${rest}".`);
 		const cue = mox.cancel(id);
 		if (!cue) return fail(`No pending cue ${toRoman(id)}.`);
-		return info(`Cancelled ${toRoman(cue.id)} (${formatClock(cue.at)}): ${cue.message}`);
+		return info(cancelledText(cue));
 	}
 
 	const now = deps.now();
 	const at = parseSchedule(word, now);
 	if (at === undefined) return fail(`Invalid time "${word}".`);
 	if (rest === "") return fail("Missing message.");
-	const cue = mox.add(at, rest);
-	info(`Scheduled ${toRoman(cue.id)} for ${formatClock(at)}${dayLabel(at, now)} (in ${formatRemaining(at - now)}): ${rest}`);
+	info(scheduledText(mox.add(at, rest), now));
+}
+
+// --- Agent tool ---
+
+export interface ToolParams {
+	action: "schedule" | "list" | "cancel";
+	time?: string;
+	message?: string;
+	id?: string;
+}
+
+const TIME_HINT = "Use 10:30 (24-hour) or +2h15m.";
+
+/**
+ * The agent's `mox` tool: schedule (at most MAX_AGENT_CUES pending), list every cue, or cancel one of its own.
+ * Returns the plain-text result; throws an Error with the reason on a failure, changing nothing.
+ */
+export function runMoxTool(params: ToolParams, deps: { mox: Mox; now(): number }): string {
+	const { mox } = deps;
+	const now = deps.now();
+	if (params.action === "list") {
+		const cues = mox.list();
+		return cues.length === 0 ? "No pending cues." : listLines(cues, now, false);
+	}
+	if (params.action === "schedule") {
+		const time = params.time?.trim() ?? "";
+		if (time === "") throw new Error(`Missing time. ${TIME_HINT}`);
+		const at = parseSchedule(time, now);
+		if (at === undefined) throw new Error(`Invalid time "${time}". ${TIME_HINT}`);
+		const message = params.message?.trim() ?? "";
+		if (message === "") throw new Error("Missing message.");
+		if (mox.list().filter((cue) => cue.by === "agent").length >= MAX_AGENT_CUES) {
+			throw new Error(`The agent already has ${MAX_AGENT_CUES} pending cues, the limit. Cancel one or wait for one to be delivered.`);
+		}
+		return scheduledText(mox.add(at, message, "agent"), now);
+	}
+	if (params.action === "cancel") {
+		const text = params.id?.trim() ?? "";
+		if (text === "") throw new Error("Missing cue id.");
+		const id = parseId(text);
+		if (id === undefined || id < 1) throw new Error(`Invalid cue id "${text}".`);
+		const cue = mox.list().find((candidate) => candidate.id === id);
+		if (!cue) throw new Error(`No pending cue ${toRoman(id)}.`);
+		if (cue.by !== "agent") throw new Error(`Cue ${toRoman(id)} was scheduled by the user; the agent can cancel only its own cues.`);
+		mox.cancel(id);
+		return cancelledText(cue);
+	}
+	throw new Error(`Unknown action "${String(params.action)}". Use schedule, list or cancel.`);
 }
 
 /** Autocompletion: `list`, `show`, `cancel`, and pending ids after `show` or `cancel`. */

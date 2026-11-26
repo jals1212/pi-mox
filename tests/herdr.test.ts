@@ -55,6 +55,7 @@ function setup(env: Record<string, string>) {
 	const app: (string | null)[] = [];
 	const pi = {
 		registerCommand: (name: string, command: unknown) => void commands.set(name, command),
+		registerTool: () => {},
 		registerMessageRenderer: () => {},
 		on: (event: string, fn: (event: unknown, ctx: unknown) => unknown) => void events.set(event, fn),
 		sendMessage: () => {},
