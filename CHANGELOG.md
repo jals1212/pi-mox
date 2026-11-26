@@ -5,6 +5,8 @@ version may add commands and options and a patch version fixes.
 
 ## Unreleased
 
+## 0.4.0
+
 ### Added
 
 - A `mox` tool for the agent: `schedule`, `list` and `cancel` the same cues as `/mox`. The agent may have at most
