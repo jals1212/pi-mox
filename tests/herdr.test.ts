@@ -50,12 +50,13 @@ function setup(env: Record<string, string>) {
 	let handle = 0;
 	const timers = new Map<number, { fireAt: number; fn: () => void }>();
 	const commands = new Map<string, any>();
+	const tools = new Map<string, any>();
 	const events = new Map<string, (event: unknown, ctx: unknown) => unknown>();
 	const pane: (string | null)[] = [];
 	const app: (string | null)[] = [];
 	const pi = {
 		registerCommand: (name: string, command: unknown) => void commands.set(name, command),
-		registerTool: () => {},
+		registerTool: (tool: { name: string }) => void tools.set(tool.name, tool),
 		registerMessageRenderer: () => {},
 		on: (event: string, fn: (event: unknown, ctx: unknown) => unknown) => void events.set(event, fn),
 		sendMessage: () => {},
@@ -86,7 +87,7 @@ function setup(env: Record<string, string>) {
 		t = Math.max(t, end);
 	};
 	const flush = () => new Promise((resolve) => setImmediate(resolve));
-	return { commands, events, ctx, pane, app, timers, advance, flush };
+	return { commands, tools, events, ctx, pane, app, timers, advance, flush };
 }
 
 const BOTH = { HERDR_ENV: "1", HERDR_PANE_ID: "p1", HERDR_SOCKET_PATH: "/s", HC_TERMINAL_ID: "t1" };
@@ -108,6 +109,15 @@ test("in Herdr the marker shows the next cue, plain: ·MOX· <time> <preview>, i
 	await s.flush();
 	assert.equal(s.pane.at(-1), null);
 	assert.equal(s.app.at(-1), null);
+});
+
+test("a cue the agent scheduled is marked (agent) in the pane token and the app label", async () => {
+	const s = setup(BOTH);
+	await s.events.get("session_start")!({}, s.ctx);
+	await s.tools.get("mox").execute("call-1", { action: "schedule", time: "10:30", message: "continúa con T3" }, undefined, undefined, s.ctx);
+	await s.flush();
+	assert.deepEqual(s.pane, ["·MOX· 10:30 continúa con T3 (agent)"]);
+	assert.deepEqual(s.app, ["·MOX· 10:30 continúa con T3 (agent)"]);
 });
 
 test("the pane token is reported again every 10 seconds while a cue waits; the app label is not", async () => {
